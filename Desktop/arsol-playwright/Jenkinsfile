@@ -21,29 +21,36 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 echo 'Installing npm packages...'
-                bat 'npm install'
+                dir('Desktop/arsol-playwright') {
+                    bat 'npm install'
+                }
             }
         }
 
         stage('Install Browsers') {
             steps {
                 echo 'Installing Playwright browsers...'
-                bat 'npx playwright install --with-deps chromium'
+                dir('Desktop/arsol-playwright') {
+                    bat 'npx playwright install --with-deps chromium'
+                }
             }
         }
 
         stage('Run Login Tests') {
             steps {
                 echo 'Running ARSOL Login & Logout tests...'
-                bat 'npx playwright test --reporter=list'
+                dir('Desktop/arsol-playwright') {
+                    bat 'npx playwright test --reporter=list'
+                }
             }
+
             post {
                 always {
                     publishHTML([
                         allowMissing: false,
                         alwaysLinkToLastBuild: true,
                         keepAll: true,
-                        reportDir: 'playwright-report',
+                        reportDir: 'Desktop/arsol-playwright/playwright-report',
                         reportFiles: 'index.html',
                         reportName: 'ARSOL Playwright Report'
                     ])
@@ -57,6 +64,7 @@ pipeline {
         success {
             echo '🎉 ALL LOGIN TESTS PASSED!'
         }
+
         failure {
             echo '❌ SOME TESTS FAILED — Check the report!'
         }
