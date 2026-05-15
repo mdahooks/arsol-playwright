@@ -1,0 +1,73 @@
+pipeline {
+    agent any
+
+    tools {
+        nodejs 'NodeJS-18'
+    }
+
+    environment {
+        CI = 'true'
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                echo 'Pulling latest code from GitHub...'
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                echo 'Installing npm packages...'
+                dir('Desktop/arsol-playwright') {
+                    bat 'npm install'
+                }
+            }
+        }
+
+        stage('Install Browsers') {
+            steps {
+                echo 'Installing Playwright browsers...'
+                dir('Desktop/arsol-playwright') {
+                    bat 'npx playwright install --with-deps chromium'
+                }
+            }
+        }
+
+        stage('Run Login Tests') {
+            steps {
+                echo 'Running ARSOL Login & Logout tests...'
+                dir('Desktop/arsol-playwright') {
+                    bat 'npx playwright test --reporter=list'
+                }
+            }
+
+            post {
+                always {
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'Desktop/arsol-playwright/playwright-report',
+                        reportFiles: 'index.html',
+                        reportName: 'ARSOL Playwright Report'
+                    ])
+                }
+            }
+        }
+
+    }
+
+    post {
+        success {
+            echo '🎉 ALL LOGIN TESTS PASSED!'
+        }
+
+        failure {
+            echo '❌ SOME TESTS FAILED — Check the report!'
+        }
+    }
+}
+
